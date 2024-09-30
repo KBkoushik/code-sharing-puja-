@@ -1,0 +1,132 @@
+all_products_data = []
+done_list = []
+finam_no_of_products = 0
+for url1 in set(urls_list[:-1]):
+    if url1 not in done_list:
+        SCRAPER_API_KEY = '73bb1fdbe8081d7e62a90bf7275f08ea'
+        url = url1
+        scraperapi_url = f'http://api.scraperapi.com?api_key={SCRAPER_API_KEY}&url={url}'
+        # Send a GET request to ScraperAPI
+        response = requests.get(scraperapi_url)
+        print(url,':',response.status_code)
+        if response.status_code ==200:
+            soup = BeautifulSoup(response.content, 'html.parser')
+            all_tr_tag = soup.find_all('tr')
+            product_details = {}
+            main_heading_found = False
+            product_heading_found = False
+            product_data_found = False
+            total_number_of_product = len(soup.find_all('td', class_ ='fabent-product-options-toggle'))
+            print('TOTAL NUMBER OF PRODUCTS: ', total_number_of_product)
+            
+            finam_no_of_products = finam_no_of_products + total_number_of_product
+            #print('FINAL NO OF PRODUCTS: ', finam_no_of_products)
+            #print('#'*70)
+            for tr_tag in all_tr_tag:
+                
+                
+                product_details['url'] = url
+                main_heading_tr = tr_tag.find_all('th')
+                product_heading_tr = tr_tag.find_all('td')
+                category_class = soup.find('nav', class_ = 'woocommerce-breadcrumb')
+                if category_class:
+                    product_details['category'] = category_class.text.strip()
+
+                
+                if len(main_heading_tr) == 4:
+                    print('main heading') 
+                    main_heading_tag = tr_tag.find('th', class_ = 'fabent-product-description')
+                    if main_heading_tag:
+                        main_heading_tag_name = main_heading_tag.text.strip()
+                        print(main_heading_tag_name)
+                        product_details['main_heading_name'] = main_heading_tag_name
+                        main_heading_found = True
+                elif len(product_heading_tr) ==4:
+                    print('   product_heading')
+                    product_heading_found = True
+                    product_id_tag = tr_tag.find('td', class_ = 'fabent-product-options-toggle')
+                    if product_id_tag:
+                        product_id = product_id_tag.text.strip()
+                        #print('id:', product_id)
+                        product_details['product_id'] = product_id
+                    product_name_tag = tr_tag.find('td', class_ ='fabent-product-description')
+                    if product_name_tag:
+                        product_name = product_name_tag.text.strip()
+                        #print('product_name: ',product_name)
+                        product_details['product_name'] = product_name
+                        
+                    product_price_tag = tr_tag.find('td', class_ ='fabent-product-price')
+                    if product_price_tag:
+                        product_price = product_price_tag.text.strip()
+                        #print('product_price: ', product_price)
+                        product_details['product_price']= product_price
+                else:
+                    print('          product data')
+                    product_details['main_heading_name'] = main_heading_tag_name
+                    product_data_found = True
+                    all_desc_div = tr_tag.find('div', class_ = 'fabent-product-options-text')
+                    desc_text = ''
+                    if all_desc_div:
+                        strong_tag = all_desc_div.find('strong')
+                        if strong_tag:
+                            desc_text = strong_tag.text.strip()
+                        d_divs = all_desc_div.find_all('div')
+                        if len(d_divs)==2:
+                            other_desc = d_divs[0].text.strip()
+                            desc_text = f'{desc_text}\n\n{other_desc}'
+                            features = d_divs[1].get_text(separator = '\n')
+                            #print('DESC: ', desc_text)
+                            #print('FEATURES: ', features)
+                            product_details['desc_text'] = desc_text
+                            product_details['features'] = features
+                        download_materials_class = tr_tag.find('div', class_ = 'fabent-product-options-downloads')
+                        if download_materials_class:
+                            all_a_tags = download_materials_class.find_all('a')
+                            if all_a_tags:
+                                for a_tag in all_a_tags:
+                                    if 'href' in a_tag.attrs:
+                                        #print(a_tag.text,':', a_tag['href'])
+                                        product_details[f'{a_tag.text.strip()} pdf'] = a_tag['href']
+                                        
+                        all_images_tag = tr_tag.find('div', class_ = 'fabent-product-images-container')
+                        if all_images_tag:
+                            img_tags = all_images_tag.find_all('img')
+                            if img_tags:
+                                unique_image_list = []
+                                count1 = 1
+                                for img_tag in img_tags:
+                                    if 'src' in img_tag.attrs:
+                                        src_link = img_tag['src']
+                                        if src_link not in unique_image_list:
+                                            #print('IMAGE URL: ',src_link )
+                                            unique_image_list.append(src_link)
+                                            img_str2 = f'product image {count1}'
+                                            product_details[img_str2] = src_link
+                                            count1+=1
+                        if main_heading_found and product_heading_found and product_data_found:
+                            all_products_data.append(product_details)
+                            #main_heading_found = False
+                            product_heading_found = False
+                            product_data_found = False
+                            product_details = {}
+                            print('FINAL NO OF PRODUCTS: ', finam_no_of_products)
+                            print('#'*100)
+                            # Create DataFrames
+                            df1 = pd.DataFrame(all_products_data)
+                            # # Specify the directory path
+                            google_drive_directory = '/content/drive/My Drive/BPP2_webscraping'  # Change 'ColabFiles' to your desired folder name
+                            # # Create the directory if it doesn't exist
+                            if not os.path.exists(google_drive_directory):
+                              os.makedirs(google_drive_directory)
+                              print(f"Directory created: {google_drive_directory}")
+                            
+                            # Create filenames using f-strings
+                            final_product_list_file_name = f'{google_drive_directory}/BPP2_webscraping data.xlsx'
+                            # Save DataFrames to Excel files with the created filenames in Google Drive
+                            df1.to_excel(final_product_list_file_name, index=False)
+                            # Print confirmation messages
+                            print(final_product_list_file_name, ' file saved successfully', 'length:', len(all_products_data))
+                            time.sleep(2)
+                            done_list.append(url1)
+
+                            
