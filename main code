@@ -1,6 +1,7 @@
 all_products_data = []
 done_list = []
 finam_no_of_products = 0
+all_product_id_list =[]
 for url1 in set(urls_list[:-1]):
     if url1 not in done_list:
         SCRAPER_API_KEY = '73bb1fdbe8081d7e62a90bf7275f08ea'
@@ -49,6 +50,8 @@ for url1 in set(urls_list[:-1]):
                         product_id = product_id_tag.text.strip()
                         #print('id:', product_id)
                         product_details['product_id'] = product_id
+                        if product_id not in all_product_id_list:
+                            all_product_id_list.append(product_id)
                     product_name_tag = tr_tag.find('td', class_ ='fabent-product-description')
                     if product_name_tag:
                         product_name = product_name_tag.text.strip()
