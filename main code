@@ -1,11 +1,13 @@
-all_products_data = []
-done_list = []
-finam_no_of_products = 0
-all_product_id_list =[]
+# all_products_data = []
+# done_list = []
+# finam_no_of_products = 0
+# all_product_id_list =[]
+saving_no = 1
 for url1 in set(urls_list[:-1]):
     if url1 not in done_list:
-        SCRAPER_API_KEY = '73bb1fdbe8081d7e62a90bf7275f08ea'
+        SCRAPER_API_KEY = 'c8b743307b05728d70de05af1ecb2296'
         url = url1
+        time.sleep(2)
         scraperapi_url = f'http://api.scraperapi.com?api_key={SCRAPER_API_KEY}&url={url}'
         # Send a GET request to ScraperAPI
         response = requests.get(scraperapi_url)
@@ -114,22 +116,24 @@ for url1 in set(urls_list[:-1]):
                             product_details = {}
                             print('FINAL NO OF PRODUCTS: ', finam_no_of_products)
                             print('#'*100)
-                            # Create DataFrames
-                            df1 = pd.DataFrame(all_products_data)
-                            # # Specify the directory path
-                            google_drive_directory = '/content/drive/My Drive/BPP2_webscraping'  # Change 'ColabFiles' to your desired folder name
-                            # # Create the directory if it doesn't exist
-                            if not os.path.exists(google_drive_directory):
-                              os.makedirs(google_drive_directory)
-                              print(f"Directory created: {google_drive_directory}")
-                            
-                            # Create filenames using f-strings
-                            final_product_list_file_name = f'{google_drive_directory}/BPP2_webscraping data.xlsx'
-                            # Save DataFrames to Excel files with the created filenames in Google Drive
-                            df1.to_excel(final_product_list_file_name, index=False)
-                            # Print confirmation messages
-                            print(final_product_list_file_name, ' file saved successfully', 'length:', len(all_products_data))
-                            time.sleep(2)
+                            saving_no+=1
                             done_list.append(url1)
-
+                            if saving_no%3==0:
+                              # Create DataFrames
+                              df1 = pd.DataFrame(all_products_data)
+                              # # Specify the directory path
+                              google_drive_directory = '/content/drive/My Drive/BPP2_webscraping'  # Change 'ColabFiles' to your desired folder name
+                              # # Create the directory if it doesn't exist
+                              if not os.path.exists(google_drive_directory):
+                                os.makedirs(google_drive_directory)
+                                print(f"Directory created: {google_drive_directory}")
+                              
+                              # Create filenames using f-strings
+                              final_product_list_file_name = f'{google_drive_directory}/BPP2_webscraping data.xlsx'
+                              # Save DataFrames to Excel files with the created filenames in Google Drive
+                              df1.to_excel(final_product_list_file_name, index=False)
+                              # Print confirmation messages
+                              print(final_product_list_file_name, ' file saved successfully', 'length:', len(all_products_data))
+                              #time.sleep(2)
+                            
                             
